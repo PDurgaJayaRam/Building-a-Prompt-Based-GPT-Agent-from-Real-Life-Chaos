@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flatmate Assistant</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Flatmate Assistant</h1>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                Configuration
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="structuredData" class="form-label">Structured Data</label>
+                    <textarea class="form-control" id="structuredData" rows="10" placeholder="Enter structured data here..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="promptInstructions" class="form-label">Prompt Instructions</label>
+                    <textarea class="form-control" id="promptInstructions" rows="5" placeholder="Enter prompt instructions here..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="saveConfig()">Save Configuration</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                Ask a Question
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <input type="text" id="questionInput" class="form-control" placeholder="Enter your question here...">
+                    <button class="btn btn-primary" type="button" onclick="askQuestion()">Submit</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                Answer
+            </div>
+            <div class="card-body">
+                <pre class="answer-content" id="answerOutput"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Save configuration to local storage
+        function saveConfig() {
+            const structuredData = document.getElementById('structuredData').value;
+            const promptInstructions = document.getElementById('promptInstructions').value;
+            
+            localStorage.setItem('structuredData', structuredData);
+            localStorage.setItem('promptInstructions', promptInstructions);
+            
+            alert('Configuration saved!');
+        }
+        
+        // Load configuration from local storage
+        function loadConfig() {
+            const structuredData = localStorage.getItem('structuredData') || '';
+            const promptInstructions = localStorage.getItem('promptInstructions') || '';
+            
+            document.getElementById('structuredData').value = structuredData;
+            document.getElementById('promptInstructions').value = promptInstructions;
+        }
+        
+        // Ask a question and get an answer
+        async function askQuestion() {
+            const question = document.getElementById('questionInput').value;
+            
+            if (!question) {
+                alert('Please enter a question!');
+                return;
+            }
+            
+            const structuredData = document.getElementById('structuredData').value;
+            const promptInstructions = document.getElementById('promptInstructions').value;
+            
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        structuredData: structuredData,
+                        promptInstructions: promptInstructions
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.error) {
+                    document.getElementById('answerOutput').textContent = `Error: ${data.error}`;
+                } else {
+                    document.getElementById('answerOutput').textContent = data.answer;
+                }
+            } catch (error) {
+                document.getElementById('answerOutput').textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        // Load saved configuration on page load
+        window.onload = loadConfig;
+    </script>
+</body>
+</html>
